@@ -37,8 +37,13 @@
         remote_src: yes
 
     - name: build project
-      ansible.builtin.shell: npm install ; npm run build ; rm -rf /usr/share/nginx/html/* ; cp -r out/* /usr/share/nginx/html/
-
+      ansible.builtin.shell: |
+        cd /tmp/frontend
+        npm install
+        npm run build
+        rm -rf /usr/share/nginx/html/*
+        cp -r out/* /usr/share/nginx/html/
+        
     - name: Restart and enable Nginx service
       ansible.builtin.service:
         name: nginx
