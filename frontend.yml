@@ -33,7 +33,7 @@
     - name: Download and extract frontend.zip
       ansible.builtin.unarchive:
         src:  https://raw.githubusercontent.com/raghudevopsb89/roboshop-microservices/main/artifacts/frontend.zip
-        dest: /tmp/frontend/frontend.zip
+        dest: /tmp/frontend
         remote_src: yes
 
     - name: build project
