@@ -1,0 +1,61 @@
+- name: frontend playbook
+  hosts: all
+  become: yes
+  tasks:
+    - name: install multiple packages
+      ansible.builtin.dnf:
+        name:
+          - golang
+          - git
+          - mysql8.4
+        state: present
+
+    - name: copy nginx config
+      ansible.builtin.copy:
+        src: catalogue.service
+        dest: /etc/systemd/system/catalogue.service
+
+    - name: Remove app directory
+      ansible.builtin.file:
+        path: /app
+        state: absent
+
+    - name: create app directory
+      ansible.builtin.file:
+        path: /app
+        state: directory
+
+    - name: Download and extract frontend.zip
+      ansible.builtin.unarchive:
+        src:  https://raw.githubusercontent.com/raghudevopsb89/roboshop-microservices/main/artifacts/catalogue.zip
+        dest: /app
+        remote_src: yes
+
+    - name: Load Schema
+      ansible.builtin.shell: |
+        mysql -h mysql.shashidevops.online -u root -pRoboShop@1 < db/schema.sql
+        mysql -h mysql.shashidevops.online -u root -pRoboShop@1 < db/app-user.sql
+        mysql -h mysql.shashidevops.online -u root -pRoboShop@1 catalogue < db/master-data.sql
+      args:
+        chdir: /app
+
+    - name: Compile Application Code
+      ansible.builtin.shell: go mod tidy && CGO_ENABLED=0 go build -o /app/catalogue .
+      args:
+        chdir: /app
+    
+    - name: apply permission for /app
+      ansible.builtin.file:
+        path: /app
+        owner: appuser
+        group: appuser
+        state: directory
+        recurse: yes
+        mode: 'o-rwx'
+    
+    - name: Start and enable catalogue
+      ansible.builtin.service:
+        name: catalogue
+        state: restarted
+        enabled: true
+
