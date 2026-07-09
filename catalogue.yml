@@ -2,18 +2,25 @@
   hosts: all
   become: yes
   tasks:
-    - name: install multiple packages
+    - name: Create Application User
+      ansible.builtin.user:
+        name: appuser
+        system: yes
+        shell: /bin/false
+        create_home: no
+
+    - name: Copy SystemD Service file
+      ansible.builtin.copy:
+        src: catalogue.service
+        dest: /etc/systemd/system/catalogue.service
+
+    - name: install go, git & mysql packages
       ansible.builtin.dnf:
         name:
           - golang
           - git
           - mysql8.4
         state: present
-
-    - name: copy nginx config
-      ansible.builtin.copy:
-        src: catalogue.service
-        dest: /etc/systemd/system/catalogue.service
 
     - name: Remove app directory
       ansible.builtin.file:
