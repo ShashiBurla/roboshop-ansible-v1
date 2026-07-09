@@ -5,7 +5,7 @@
     - name: install nginx
       ansible.builtin.dnf:
         name: nginx
-        state: preesent
+        state: present
 
     - name: copy nginx config
       ansible.builtin.copy:
@@ -18,7 +18,7 @@
     - name: install nodejs
       ansible.builtin.dnf:
         name: nodejs
-        state: preesent
+        state: present
 
     - name: Remove app directory
       ansible.builtin.file:
