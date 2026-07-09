@@ -30,10 +30,11 @@
         path: /tmp/frontend
         state: directory
     
-    - name: Download and extract frontend.zio
+    - name: Download and extract frontend.zip
       ansible.builtin.unarchive:
         src:  https://raw.githubusercontent.com/raghudevopsb89/roboshop-microservices/main/artifacts/frontend.zip
         dest: /tmp/frontend.zip
+        remote_src: yes
 
     - name: Download npm
       ansible.builtin.shell: npm install ; npm run build ; rm -rf /usr/share/nginx/html/* ; cp -r out/* /usr/share/nginx/html/
