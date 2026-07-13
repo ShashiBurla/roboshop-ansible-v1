@@ -1,4 +1,4 @@
-- name: Setup Catalogue Component
+- name: Setup Orders Component
   hosts: all
   become: yes
   tasks:
@@ -11,19 +11,15 @@
 
     - name: Copy SystemD Service file
       ansible.builtin.copy:
-        src: catalogue.service
-        dest: /etc/systemd/system/catalogue.service
+        src: orders.service
+        dest: /etc/systemd/system/orders.service
 
-    - name: Install GoLang & Git
+    - name: Install Java & Maven
       ansible.builtin.dnf:
         name:
-          - golang
-          - git
-        state: present
-
-    - name: Install MySQL Client
-      ansible.builtin.dnf:
-        name: mysql8.4
+          - java-21-openjdk
+          - java-21-openjdk-devel
+          - maven
         state: present
 
     - name: Remove folder for application
@@ -38,27 +34,17 @@
 
     - name: Download Application Content
       ansible.builtin.unarchive:
-        src: https://raw.githubusercontent.com/raghudevopsb89/roboshop-microservices/main/artifacts/catalogue.zip
+        src: https://raw.githubusercontent.com/raghudevopsb89/roboshop-microservices/main/artifacts/orders.zip
         dest: /app
         remote_src: yes
 
-    - name: Load Schema
-      ansible.builtin.shell: mysql -h mysql.shashidevops.online -u root -pRoboShop@1 < db/schema.sql
+    - name: Build Application Code
+      ansible.builtin.shell: mvn clean package -DskipTests
       args:
         chdir: /app
 
-    - name: Load App User
-      ansible.builtin.shell: mysql -h mysql.shashidevops.online -u root -pRoboShop@1 < db/app-user.sql
-      args:
-        chdir: /app
-
-    - name: Load Master Data
-      ansible.builtin.shell: mysql -h mysql.shashidevops.online -u root -pRoboShop@1 catalogue < db/master-data.sql
-      args:
-        chdir: /app
-
-    - name: Compile Application Code
-      ansible.builtin.shell: go mod tidy && CGO_ENABLED=0 go build -o /app/catalogue .
+    - name: Copy Jar file
+      ansible.builtin.shell: cp target/orders.jar /app/orders.jar
       args:
         chdir: /app
 
@@ -72,7 +58,7 @@
 
     - name: Start Service
       ansible.builtin.systemd_service:
-        name: catalogue
+        name: orders
         state: restarted
         enabled: yes
         daemon_reload: yes

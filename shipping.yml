@@ -1,4 +1,4 @@
-- name: Setup Catalogue Component
+- name: Setup Shipping Component
   hosts: all
   become: yes
   tasks:
@@ -11,14 +11,15 @@
 
     - name: Copy SystemD Service file
       ansible.builtin.copy:
-        src: catalogue.service
-        dest: /etc/systemd/system/catalogue.service
+        src: shipping.service
+        dest: /etc/systemd/system/shipping.service
 
-    - name: Install GoLang & Git
+    - name: Install Java & Maven
       ansible.builtin.dnf:
         name:
-          - golang
-          - git
+          - java-21-openjdk
+          - java-21-openjdk-devel
+          - maven
         state: present
 
     - name: Install MySQL Client
@@ -38,7 +39,7 @@
 
     - name: Download Application Content
       ansible.builtin.unarchive:
-        src: https://raw.githubusercontent.com/raghudevopsb89/roboshop-microservices/main/artifacts/catalogue.zip
+        src: https://raw.githubusercontent.com/raghudevopsb89/roboshop-microservices/main/artifacts/shipping.zip
         dest: /app
         remote_src: yes
 
@@ -52,13 +53,13 @@
       args:
         chdir: /app
 
-    - name: Load Master Data
-      ansible.builtin.shell: mysql -h mysql.shashidevops.online -u root -pRoboShop@1 catalogue < db/master-data.sql
+    - name: Build Application Code
+      ansible.builtin.shell: mvn clean package -DskipTests
       args:
         chdir: /app
 
-    - name: Compile Application Code
-      ansible.builtin.shell: go mod tidy && CGO_ENABLED=0 go build -o /app/catalogue .
+    - name: Copy Jar file
+      ansible.builtin.shell: cp target/shipping.jar /app/shipping.jar
       args:
         chdir: /app
 
@@ -72,7 +73,7 @@
 
     - name: Start Service
       ansible.builtin.systemd_service:
-        name: catalogue
+        name: shipping
         state: restarted
         enabled: yes
         daemon_reload: yes

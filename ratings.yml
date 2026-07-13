@@ -1,4 +1,4 @@
-- name: Setup Catalogue Component
+- name: Setup Ratings Component
   hosts: all
   become: yes
   tasks:
@@ -11,19 +11,15 @@
 
     - name: Copy SystemD Service file
       ansible.builtin.copy:
-        src: catalogue.service
-        dest: /etc/systemd/system/catalogue.service
+        src: ratings.service
+        dest: /etc/systemd/system/ratings.service
 
-    - name: Install GoLang & Git
+    - name: Install Python & Pip & MySQL Client
       ansible.builtin.dnf:
         name:
-          - golang
-          - git
-        state: present
-
-    - name: Install MySQL Client
-      ansible.builtin.dnf:
-        name: mysql8.4
+          - python3
+          - python3-pip
+          - mysql8.4
         state: present
 
     - name: Remove folder for application
@@ -38,7 +34,7 @@
 
     - name: Download Application Content
       ansible.builtin.unarchive:
-        src: https://raw.githubusercontent.com/raghudevopsb89/roboshop-microservices/main/artifacts/catalogue.zip
+        src: https://raw.githubusercontent.com/raghudevopsb89/roboshop-microservices/main/artifacts/ratings.zip
         dest: /app
         remote_src: yes
 
@@ -52,13 +48,8 @@
       args:
         chdir: /app
 
-    - name: Load Master Data
-      ansible.builtin.shell: mysql -h mysql.shashidevops.online -u root -pRoboShop@1 catalogue < db/master-data.sql
-      args:
-        chdir: /app
-
-    - name: Compile Application Code
-      ansible.builtin.shell: go mod tidy && CGO_ENABLED=0 go build -o /app/catalogue .
+    - name: Install App Dependencies
+      ansible.builtin.shell: pip3 install -r requirements.txt cryptography
       args:
         chdir: /app
 
@@ -72,7 +63,7 @@
 
     - name: Start Service
       ansible.builtin.systemd_service:
-        name: catalogue
+        name: ratings
         state: restarted
         enabled: yes
         daemon_reload: yes
